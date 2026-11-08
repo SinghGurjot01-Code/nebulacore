@@ -11,7 +11,7 @@ interaction that can work without a backend. Supabase and real cloud streaming c
 
 | Area | What you can do |
 |---|---|
-| Auth | Splash, welcome, register, log in, forgot and reset password, email verification state, log out, persistent login. All local demo. |
+| Auth | Splash, welcome, register, log in, **Continue with Google**, forgot and reset password, email verification state, log out, persistent login. Local demo, or Supabase when configured. |
 | Home | Greeting, notification badge, session status, upcoming booking, featured games, recently played, announcements. |
 | Games | 55-game demo catalogue with artwork, search, category filters, favourites, game details. |
 | Bookings | Choose a plan, date, time slot and optional game, review, confirm, view upcoming and history, cancel (1 hour notice). Simulated. |
@@ -21,7 +21,6 @@ interaction that can work without a backend. Supabase and real cloud streaming c
 
 ## What is planned (not done)
 
-- Google sign-in (the button is shown disabled and marked pending).
 - Push notifications, a staff app for support replies.
 - Moonlight streaming client, Sunshine-compatible hosts and machine assignment.
 - Dark mode (light only by design in this release), wallet and admin features (out of scope).
@@ -82,6 +81,7 @@ The app uses the **Nebula** Supabase project when `nebula.supabaseUrl` and `nebu
 | Feature | Backend |
 |---|---|
 | Sign up, log in, log out, reset password, change name | Supabase Auth (email and password) |
+| Continue with Google | Supabase Auth Google provider, PKCE flow in a Custom Tab, returns to `nebula://auth/callback` |
 | Games, booking plans, announcements | Tables `games`, `booking_options`, `announcements` (public read) |
 | Favourites | Table `favourites`, one row per user and game |
 | Bookings | Table `bookings`, written only by the `create_booking` and `cancel_booking` functions |
@@ -103,7 +103,7 @@ Tokens are kept in DataStore; move them to the Android Keystore before a Play St
 1. Authentication, URL Configuration, Redirect URLs: add `nebula://auth/*`. Without it, confirmation and
    reset emails open the site URL instead of the app.
 2. Optional while testing: turn off "Confirm email" so sign-up returns a session straight away.
-3. Google sign-in stays disabled in the app until you enable the Google provider and add the OAuth flow.
+3. Google sign-in: follow `GOOGLE_SIGN_IN_SETUP.md` (Google Cloud web client plus the Supabase Google provider).
 
 ### Support replies
 
@@ -127,3 +127,7 @@ The boundary is `StreamingClient` and `StreamingRepository` in `domain/repositor
 `app/src/test` covers validation, game filtering, favourites, auth, booking creation, overlap and cancellation,
 support tickets, the login, register and ticket ViewModels, and the Supabase parsing helpers. The Supabase
 repositories themselves are not unit tested (they need a network).
+
+## App icon
+
+`Nebula_logo.svg` is converted to `res/drawable/nebula_logo.xml` (used in the app, tinted) and to the adaptive launcher icon: black logo on a white background, with a monochrome layer for Android 13+ themed icons.
