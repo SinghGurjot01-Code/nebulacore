@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/nebula-banner.svg" alt="Nebula for Android" width="100%" />
+  <img src="https://d2ol7oe51mr4n9.cloudfront.net/user_3LmA9iMc5LfRGU0fEp7qlHcFjgA/e9f8ea05-b1af-4c4e-a117-5fd957c8d740.png" alt="Nebula cloud gaming website preview" width="100%" />
   <br />
   <a href="https://nebulacoreweb.vercel.app/"><strong>Visit Nebula Website</strong></a>
   ·
