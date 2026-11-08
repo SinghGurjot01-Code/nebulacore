@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.nebula.app.features.auth.ForgotPasswordScreen
 import com.nebula.app.features.auth.LoginScreen
+import com.nebula.app.features.auth.OAuthCallbackScreen
 import com.nebula.app.features.auth.RegisterScreen
 import com.nebula.app.features.auth.ResetPasswordScreen
 import com.nebula.app.features.auth.SplashScreen
@@ -124,6 +125,16 @@ fun NebulaNavHost(
                 onBack = back,
                 onDone = { navController.resetTo(Routes.LOGIN) },
                 linkUri = entry.deepLinkUri()
+            )
+        }
+        composable(
+            Routes.OAUTH,
+            deepLinks = listOf(navDeepLink { uriPattern = "nebula://auth/callback" })
+        ) { entry ->
+            OAuthCallbackScreen(
+                linkUri = entry.deepLinkUri(),
+                onSignedIn = { navController.resetTo(Routes.HOME) },
+                onBackToLogin = { navController.resetTo(Routes.LOGIN) }
             )
         }
         composable(

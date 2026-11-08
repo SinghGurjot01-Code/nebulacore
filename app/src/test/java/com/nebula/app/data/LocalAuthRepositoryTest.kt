@@ -81,7 +81,7 @@ class LocalAuthRepositoryTest {
     }
 
     @Test
-    fun googleSignInIsNotAvailable() {
+    fun googleSignInIsNotAvailableInDemo() {
         assertFalse(repository().googleSignInAvailable)
     }
 }

@@ -22,6 +22,7 @@ object Routes {
     const val FORGOT = "forgot"
     const val RESET = "reset"
     const val VERIFY = "verify"
+    const val OAUTH = "oauth"
 
     const val HOME = "home"
     const val GAMES = "games"

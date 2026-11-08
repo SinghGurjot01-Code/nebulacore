@@ -243,3 +243,50 @@ class VerifyEmailViewModel(private val auth: AuthRepository) : ViewModel() {
 class SplashViewModel(private val auth: AuthRepository) : ViewModel() {
     suspend fun isSignedIn(): Boolean = auth.session.first() != null
 }
+
+// ------------------------------------------------------------------ Google sign-in
+
+data class GoogleUiState(val loading: Boolean = false, val error: String? = null)
+
+class GoogleSignInViewModel(private val auth: AuthRepository) : ViewModel() {
+    val available: Boolean = auth.googleSignInAvailable
+
+    private val _state = MutableStateFlow(GoogleUiState())
+    val state: StateFlow<GoogleUiState> = _state.asStateFlow()
+
+    /** Prepares PKCE and hands the authorize URL to [open] (which launches the browser). */
+    fun start(open: (String) -> Unit) {
+        if (_state.value.loading) return
+        viewModelScope.launch {
+            _state.update { GoogleUiState(loading = true) }
+            auth.startGoogleSignIn()
+                .onSuccess { url ->
+                    _state.update { GoogleUiState() }
+                    open(url)
+                }
+                .onFailure { error -> _state.update { GoogleUiState(error = error.userMessage()) } }
+        }
+    }
+}
+
+data class OAuthCallbackUiState(val error: String? = null)
+
+class OAuthCallbackViewModel(private val auth: AuthRepository) : ViewModel() {
+    private val _state = MutableStateFlow(OAuthCallbackUiState())
+    val state: StateFlow<OAuthCallbackUiState> = _state.asStateFlow()
+    private var handled = false
+
+    fun handle(uri: String?, onSuccess: () -> Unit) {
+        if (handled) return
+        handled = true
+        viewModelScope.launch {
+            if (uri == null) {
+                _state.update { OAuthCallbackUiState("This sign-in link is not valid.") }
+                return@launch
+            }
+            auth.completeGoogleSignIn(uri)
+                .onSuccess { onSuccess() }
+                .onFailure { error -> _state.update { OAuthCallbackUiState(error.userMessage()) } }
+        }
+    }
+}

@@ -31,7 +31,7 @@ interface AuthRepository {
     /** Email waiting for confirmation after sign-up, when no session exists yet. */
     val pendingVerificationEmail: Flow<String?> get() = flowOf(null)
 
-    /** Google sign-in needs backend configuration and is not available yet. */
+    /** True when Google sign-in can run (needs the Supabase backend). */
     val googleSignInAvailable: Boolean
 
     suspend fun login(email: String, password: String): Result<User>
@@ -44,6 +44,14 @@ interface AuthRepository {
 
     suspend fun resendVerification(): Result<Unit> =
         Result.failure(NebulaException("Not available in demo mode."))
+
+    /** Prepares Google sign-in and returns the URL to open in the browser. */
+    suspend fun startGoogleSignIn(): Result<String> =
+        Result.failure(NebulaException("Google sign-in needs the Nebula backend and is not available in demo mode."))
+
+    /** Finishes Google sign-in from the nebula://auth/callback link the browser returns to. */
+    suspend fun completeGoogleSignIn(uri: String): Result<User> =
+        Result.failure(NebulaException("Google sign-in is not available in demo mode."))
 
     /** Handles a nebula://auth/... link from an email. Returns true when it was accepted. */
     suspend fun handleAuthLink(uri: String): Boolean = false

@@ -462,7 +462,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 RowDivider()
                 InfoLine("Notifications", "Preferences on device, sample inbox")
                 RowDivider()
-                InfoLine("Google sign-in", "Not set up yet")
+                InfoLine("Google sign-in", if (demo) "Needs the Nebula backend" else "Supabase Auth")
                 RowDivider()
                 InfoLine("Cloud streaming", "Not connected")
                 RowDivider()

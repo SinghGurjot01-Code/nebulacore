@@ -22,6 +22,10 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import android.content.Intent
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -142,6 +147,68 @@ fun WelcomeScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
     }
 }
 
+// ------------------------------------------------------------------ Google
+
+/** Opens Google sign-in in a Custom Tab; the result returns through nebula://auth/callback. */
+@Composable
+private fun GoogleSignInButton() {
+    val viewModel = nebulaViewModel(key = "google") { GoogleSignInViewModel(it.authRepository) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    NebulaButton(
+        text = "Continue with Google",
+        onClick = {
+            viewModel.start { url ->
+                try {
+                    CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
+                } catch (e: Exception) {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
+        kind = ButtonKind.Secondary,
+        enabled = viewModel.available,
+        loading = state.loading
+    )
+    if (!viewModel.available) {
+        Text(
+            "Google sign-in needs the Nebula backend and is not available in demo mode.",
+            style = MaterialTheme.typography.bodySmall,
+            color = NebulaColors.Secondary
+        )
+    }
+    state.error?.let { InfoBanner(it, Icons.Filled.Info, tone = ChipTone.Danger) }
+}
+
+/** Landing screen for nebula://auth/callback: finishes the Google sign-in, then opens Home. */
+@Composable
+fun OAuthCallbackScreen(linkUri: String?, onSignedIn: () -> Unit, onBackToLogin: () -> Unit) {
+    val viewModel = nebulaViewModel { OAuthCallbackViewModel(it.authRepository) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(linkUri) { viewModel.handle(linkUri, onSignedIn) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(NebulaColors.Surface)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val error = state.error
+        if (error == null) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                CircularProgressIndicator(color = NebulaColors.Accent)
+                Text("Signing you in…", style = MaterialTheme.typography.bodyLarge, color = NebulaColors.Secondary)
+            }
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                InfoBanner(error, Icons.Filled.Info, tone = ChipTone.Danger)
+                NebulaButton("Back to log in", onBackToLogin, Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
 // ------------------------------------------------------------------ Login
 
 @Composable
@@ -196,18 +263,7 @@ fun LoginScreen(
             Text("or", color = NebulaColors.Secondary, style = MaterialTheme.typography.bodySmall)
             HorizontalDivider(modifier = Modifier.weight(1f), color = NebulaColors.Border)
         }
-        NebulaButton(
-            text = "Continue with Google",
-            onClick = {},
-            modifier = Modifier.fillMaxWidth(),
-            kind = ButtonKind.Secondary,
-            enabled = false
-        )
-        Text(
-            "Google sign-in is pending backend configuration and is not available in this build.",
-            style = MaterialTheme.typography.bodySmall,
-            color = NebulaColors.Secondary
-        )
+        GoogleSignInButton()
 
         if (demo) {
             InfoBanner(
@@ -298,11 +354,12 @@ fun RegisterScreen(onBack: () -> Unit, onRegistered: () -> Unit, onLogin: () -> 
             modifier = Modifier.fillMaxWidth(),
             loading = state.loading
         )
-        Text(
-            "Google sign-up is pending backend configuration.",
-            style = MaterialTheme.typography.bodySmall,
-            color = NebulaColors.Secondary
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HorizontalDivider(modifier = Modifier.weight(1f), color = NebulaColors.Border)
+            Text("or", color = NebulaColors.Secondary, style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider(modifier = Modifier.weight(1f), color = NebulaColors.Border)
+        }
+        GoogleSignInButton()
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,

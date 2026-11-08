@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import org.json.JSONObject
 
-/** Supabase Auth (email and password). Google sign-in is not configured yet. */
+/** Supabase Auth: email and password, plus Google sign-in through the PKCE browser flow. */
 class RemoteAuthRepository(
     private val client: SupabaseClient,
     private val store: KeyValueStore
 ) : AuthRepository {
 
     override val isDemo: Boolean = false
-    override val googleSignInAvailable: Boolean = false
+    override val googleSignInAvailable: Boolean = true
 
     override val session: Flow<User?> =
         store.observe(SupabaseKeys.USER).map { raw ->
@@ -24,6 +24,39 @@ class RemoteAuthRepository(
         }
 
     override val pendingVerificationEmail: Flow<String?> = store.observe(SupabaseKeys.PENDING_EMAIL)
+
+    override suspend fun startGoogleSignIn(): Result<String> = safeResult {
+        val verifier = Pkce.newVerifier()
+        store.put(SupabaseKeys.PKCE_VERIFIER, verifier)
+        client.googleAuthorizeUrl(Pkce.challenge(verifier))
+    }
+
+    override suspend fun completeGoogleSignIn(uri: String): Result<User> = safeResult {
+        val params = client.parseQueryParams(uri) + client.parseLinkParams(uri)
+        val error = params["error"]
+        if (error != null) {
+            throw NebulaException(
+                if (error == "access_denied") "Google sign-in was cancelled."
+                else params["error_description"]?.takeIf { it.isNotBlank() } ?: "Google sign-in failed. Please try again."
+            )
+        }
+        val verifier = store.observe(SupabaseKeys.PKCE_VERIFIER).first()
+        if (verifier == null) {
+            // The same callback can be delivered twice (for example after a rotation): reuse the existing session.
+            val existing = store.observe(SupabaseKeys.USER).first()
+            if (existing != null) return@safeResult parseUser(JSONObject(existing))
+            throw NebulaException("This sign-in expired. Please tap Continue with Google again.")
+        }
+        val code = params["code"] ?: throw NebulaException("Google did not return a sign-in code. Please try again.")
+        val response = client.request(
+            "POST", "/auth/v1/token?grant_type=pkce",
+            JSONObject().put("auth_code", code).put("code_verifier", verifier).toString(),
+            authenticated = false
+        )
+        if (!response.ok) throw NebulaException(authMessage(response))
+        store.put(SupabaseKeys.PKCE_VERIFIER, null)
+        client.storeSession(response.json())
+    }
 
     override suspend fun login(email: String, password: String): Result<User> = safeResult {
         val response = client.request(

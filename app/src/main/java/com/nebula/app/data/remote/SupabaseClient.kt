@@ -13,6 +13,9 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.util.Base64
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Project URL and public (anon) key come from gradle.properties. Never put a service-role key here. */
@@ -23,6 +26,7 @@ object SupabaseConfig {
 
     const val REDIRECT_RESET = "nebula://auth/reset"
     const val REDIRECT_VERIFIED = "nebula://auth/verified"
+    const val REDIRECT_OAUTH = "nebula://auth/callback"
 }
 
 object SupabaseKeys {
@@ -31,6 +35,22 @@ object SupabaseKeys {
     const val USER = "sb_user"
     const val PENDING_EMAIL = "sb_pending_email"
     const val RECOVERY = "sb_recovery"
+    const val PKCE_VERIFIER = "sb_pkce_verifier"
+}
+
+/** PKCE (RFC 7636) helpers for the OAuth code flow. */
+object Pkce {
+    fun newVerifier(): String {
+        val bytes = ByteArray(48)
+        SecureRandom().nextBytes(bytes)
+        return encode(bytes)
+    }
+
+    fun challenge(verifier: String): String =
+        encode(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
+
+    private fun encode(bytes: ByteArray): String =
+        Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 }
 
 fun enc(value: String): String = URLEncoder.encode(value, "UTF-8")
@@ -40,7 +60,9 @@ internal fun JSONObject.str(key: String): String? = if (isNull(key)) null else o
 fun parseUser(json: JSONObject): User {
     val email = json.optString("email")
     val meta = json.optJSONObject("user_metadata")
-    val name = meta?.str("full_name")?.takeIf { it.isNotBlank() } ?: email.substringBefore("@")
+    val name = meta?.str("full_name")?.takeIf { it.isNotBlank() }
+        ?: meta?.str("name")?.takeIf { it.isNotBlank() }
+        ?: email.substringBefore("@")
     return User(
         id = json.optString("id"),
         fullName = name,
@@ -171,6 +193,22 @@ class SupabaseClient(
         } catch (e: NebulaException) {
             false
         }
+    }
+
+    /** URL that starts Google sign-in in the browser; Supabase redirects back to nebula://auth/callback?code=... */
+    fun googleAuthorizeUrl(codeChallenge: String): String =
+        base + "/auth/v1/authorize?provider=google" +
+            "&redirect_to=" + enc(SupabaseConfig.REDIRECT_OAUTH) +
+            "&code_challenge=" + codeChallenge +
+            "&code_challenge_method=s256"
+
+    /** Parses the query string of a nebula://auth/... link (used by the OAuth code flow). */
+    fun parseQueryParams(uri: String): Map<String, String> {
+        val query = Uri.parse(uri).encodedQuery ?: return emptyMap()
+        return query.split("&").mapNotNull { part ->
+            val index = part.indexOf('=')
+            if (index <= 0) null else Uri.decode(part.substring(0, index)) to Uri.decode(part.substring(index + 1).replace('+', ' '))
+        }.toMap()
     }
 
     /** Parses tokens from a nebula://auth/... link (values arrive in the URL fragment). */
