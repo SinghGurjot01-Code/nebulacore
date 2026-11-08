@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+local.properties
+.externalNativeBuild/
+.cxx/
+
+# Local machine secrets and environment files
+.env
+.env.*
+!.env.example
+secrets.properties
+
+# OS/editor files
+.DS_Store
+Thumbs.db

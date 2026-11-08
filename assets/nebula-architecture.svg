@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-labelledby="title desc">
+<title id="title">Nebula app architecture</title><desc id="desc">Compose UI connects to ViewModels, repositories, local data and Supabase services.</desc>
+<defs><linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#171b31"/><stop offset="1" stop-color="#252047"/></linearGradient><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 9 3 0 6" fill="none" stroke="#a9a3d8" stroke-width="1.5"/></marker></defs>
+<rect width="1200" height="460" rx="24" fill="#0d1020"/><text x="56" y="62" fill="#f5f3ff" font-family="Arial,sans-serif" font-size="27" font-weight="700">Nebula Android architecture</text>
+<g font-family="Arial,sans-serif" text-anchor="middle">
+<rect x="55" y="130" width="220" height="110" rx="16" fill="url(#panel)" stroke="#8b7cf6"/><text x="165" y="174" fill="#fff" font-size="22" font-weight="700">Jetpack Compose</text><text x="165" y="207" fill="#c5c1e8" font-size="15">Screens · UI state</text>
+<rect x="345" y="130" width="220" height="110" rx="16" fill="url(#panel)" stroke="#8b7cf6"/><text x="455" y="174" fill="#fff" font-size="22" font-weight="700">ViewModels</text><text x="455" y="207" fill="#c5c1e8" font-size="15">State · Coroutines · Flow</text>
+<rect x="635" y="130" width="220" height="110" rx="16" fill="url(#panel)" stroke="#8b7cf6"/><text x="745" y="174" fill="#fff" font-size="22" font-weight="700">Repositories</text><text x="745" y="207" fill="#c5c1e8" font-size="15">Domain contracts</text>
+<rect x="935" y="75" width="210" height="105" rx="16" fill="#172a36" stroke="#48b5a6"/><text x="1040" y="117" fill="#fff" font-size="21" font-weight="700">Supabase</text><text x="1040" y="148" fill="#b8e4db" font-size="15">Auth · Remote data</text>
+<rect x="935" y="245" width="210" height="105" rx="16" fill="#2a213b" stroke="#b28bfa"/><text x="1040" y="287" fill="#fff" font-size="21" font-weight="700">Local data</text><text x="1040" y="318" fill="#d8c8f7" font-size="15">DataStore · Demo repos</text>
+<g fill="none" stroke="#a9a3d8" stroke-width="2.5" marker-end="url(#arrow)"><path d="M275 185H335"/><path d="M565 185H625"/><path d="M855 165H915"/><path d="M855 205 915 297"/></g>
+<text x="600" y="410" fill="#9995ba" font-size="16">Feature modules: Auth · Home · Games · Bookings · Support · Profile · Streaming</text>
+</g></svg>
